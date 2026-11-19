@@ -207,7 +207,7 @@ Mais trechos = questões mais ricas e mais caras. Menos trechos = mais barato e 
 ### `simulado`
 | Chave | Padrão | O que faz |
 |---|---|---|
-| `questoes_por_lote` | `5` | Questões por rodada |
+| `questoes_por_lote` | `8` | Questões por rodada (o front aceita de 1 a 30) |
 | `opcoes_por_questao` | `5` | Alternativas por questão (2 a 8) |
 | `idioma` | `"portugues do Brasil"` | Idioma das questões |
 | `instrucoes_extras` | `""` | Texto livre injetado no prompt |

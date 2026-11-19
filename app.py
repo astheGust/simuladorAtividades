@@ -57,6 +57,10 @@ _inicializado = False
 _init_lock = threading.Lock()
 
 EXTENSOES_UPLOAD = {".pdf"}
+MIN_QUESTOES_POR_LOTE = 1
+MAX_QUESTOES_POR_LOTE = 30
+MIN_OPCOES_POR_QUESTAO = 2
+MAX_OPCOES_POR_QUESTAO = 8
 app = Flask(__name__, template_folder=str(cfgmod.TEMPLATES_DIR))
 app.config["MAX_CONTENT_LENGTH"] = int(os.getenv("MAX_UPLOAD_MB", "25")) * 1024 * 1024
 
@@ -69,6 +73,15 @@ _perguntas_vetores = None          # matriz numpy para comparacao semantica
 def cfg_atual():
     """Configuracao ativa: settings.json como padrao, formulario como override."""
     return _config_web or cfgmod.carregar(recarregar=True)
+
+
+def _limitar_inteiro(valor, minimo, maximo, padrao):
+    """Converte uma configuração recebida pelo front para um inteiro válido."""
+    try:
+        valor = int(valor)
+    except (TypeError, ValueError):
+        valor = padrao
+    return max(minimo, min(maximo, valor))
 
 
 def garantir_inicializado():
@@ -433,11 +446,18 @@ def api_config():
         })
 
     dados = request.get_json(silent=True) or {}
-    try:
-        questoes = max(1, min(30, int(dados.get("questoes", 8))))
-        opcoes = max(2, min(8, int(dados.get("opcoes", 4))))
-    except (TypeError, ValueError):
-        return jsonify({"erro": "Quantidade de questoes/opcoes invalida."}), 400
+    questoes = _limitar_inteiro(
+        dados.get("questoes", 8),
+        MIN_QUESTOES_POR_LOTE,
+        MAX_QUESTOES_POR_LOTE,
+        8,
+    )
+    opcoes = _limitar_inteiro(
+        dados.get("opcoes", 4),
+        MIN_OPCOES_POR_QUESTAO,
+        MAX_OPCOES_POR_QUESTAO,
+        4,
+    )
 
     dificuldade = str(dados.get("dificuldade", "variada")).lower()
     if dificuldade not in {"facil", "media", "dificil", "variada"}:
@@ -471,7 +491,15 @@ def api_config():
         _gerador = None
         _erro_gerador = str(e)
         return jsonify({"ok": False, "erro": _erro_gerador}), 400
-    return jsonify({"ok": True, "config": {"questoes": questoes, "opcoes": opcoes, "dificuldade": dificuldade, "foco": foco}})
+    return jsonify({
+        "ok": True,
+        "config": {
+            "questoes": questoes,
+            "opcoes": opcoes,
+            "dificuldade": dificuldade,
+            "foco": foco,
+        },
+    })
 
 
 @app.route("/api/upload", methods=["POST"])

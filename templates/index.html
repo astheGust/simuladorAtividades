@@ -164,10 +164,11 @@
     <p class="muted">Envie um PDF e escolha como a próxima atividade será gerada.</p>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:18px 0">
       <label>PDF de estudo<input id="pdfs" type="file" accept="application/pdf,.pdf" multiple></label>
-      <label>Questões<input id="cfg-questoes" type="number" min="1" max="30" value="8"></label>
+      <label>Questões<input id="cfg-questoes" type="number" min="1" max="30" step="1" value="8" aria-describedby="cfg-questoes-ajuda"></label>
       <label>Alternativas<input id="cfg-opcoes" type="number" min="2" max="8" value="4"></label>
       <label>Dificuldade<select id="cfg-dificuldade"><option value="variada">Variada</option><option value="facil">Fácil</option><option value="media">Média</option><option value="dificil">Difícil</option></select></label>
     </div>
+    <p id="cfg-questoes-ajuda" class="muted" style="margin:-8px 0 14px">Cada rodada pode ter de 1 a 30 questões. O valor escolhido é aplicado diretamente na próxima geração.</p>
     <label>Foco da atividade (opcional)
       <textarea id="cfg-foco" rows="3" maxlength="2000" placeholder="Ex.: priorize linguagem SQL, SELECT, JOIN, GROUP BY e subconsultas; não foque em modelagem."></textarea>
     </label>
@@ -297,6 +298,11 @@ async function carregarPerguntas(){
     const config = await fetch("/api/config", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({questoes:$("#cfg-questoes").value, opcoes:$("#cfg-opcoes").value, dificuldade:$("#cfg-dificuldade").value, foco:$("#cfg-foco").value})});
     const dadosConfig = await config.json();
     if(!config.ok || dadosConfig.erro) throw new Error(dadosConfig.erro || "Falha na configuração");
+    // A API devolve a configuração efetivamente aplicada e mantém o front sincronizado.
+    if(dadosConfig.config && dadosConfig.config.questoes != null)
+      $("#cfg-questoes").value = dadosConfig.config.questoes;
+    if(dadosConfig.config && dadosConfig.config.opcoes != null)
+      $("#cfg-opcoes").value = dadosConfig.config.opcoes;
   }catch(e){
     $("#app").innerHTML = `<div class="card"><div class="error-box">${escapeHtml(e.message)}</div></div>`;
     return;

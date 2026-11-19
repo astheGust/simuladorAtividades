@@ -65,7 +65,7 @@ O navegador abre sozinho em <http://127.0.0.1:5000>. Clique em **"Começar simul
 
 - Acertou → a alternativa fica **verde**.
 - Errou → a sua fica **vermelha**, a certa fica **verde** e aparece a **explicação**.
-- Terminou as 5? Clique em **"Gerar próximas questões"**.
+- Terminou o lote? Clique em **"Gerar próximas questões"**.
 
 Para parar: volte à janela do PowerShell e aperte **Ctrl + C**.
 

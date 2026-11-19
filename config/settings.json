@@ -41,7 +41,7 @@
   },
 
   "simulado": {
-    "_ajuda": "questoes_por_lote: quantas questoes o modelo gera por rodada. opcoes_por_questao: de 2 a 8 alternativas. limiar_duplicata: 0 a 1; quanto menor, mais agressivo o filtro de questoes repetidas. permitir_sem_conteudo: se true, o simulado funciona mesmo com a pasta vazia, usando o tema_livre e o conhecimento proprio do modelo.",
+    "_ajuda": "questoes_por_lote: quantas questoes o modelo gera por rodada (o front aceita de 1 a 30, inclusive menos de 8). opcoes_por_questao: de 2 a 8 alternativas. limiar_duplicata: 0 a 1; quanto menor, mais agressivo o filtro de questoes repetidas. permitir_sem_conteudo: se true, o simulado funciona mesmo com a pasta vazia, usando o tema_livre e o conhecimento proprio do modelo.",
     "questoes_por_lote": 8,
     "opcoes_por_questao": 4,
     "idioma": "portugues do Brasil",
