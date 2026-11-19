@@ -12,7 +12,8 @@
 
   "rag": {
     "_ajuda": "modelo_embedding: modelo local que transforma texto em vetores (multilingue, funciona bem em portugues). Trocar esse nome forca a reconstrucao completa da base. trechos_por_topico/vizinhos_por_trecho controlam quanto material vai para o prompt.",
-    "modelo_embedding": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+    "provedor_embedding": "openai",
+    "modelo_embedding": "text-embedding-3-small",
     "pasta_banco": ".chroma_db",
     "colecao": "conteudo",
     "chunk_alvo_tokens": 300,

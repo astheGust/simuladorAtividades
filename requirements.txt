@@ -15,7 +15,6 @@ openai>=1.60               # cliente oficial da API da OpenAI
 
 # --- RAG: banco vetorial + embeddings ------------------------------------- #
 chromadb>=0.5.15           # banco vetorial local (guarda os trechos dos arquivos)
-sentence-transformers>=3.0 # gera os embeddings localmente (de graca, sem API)
 tiktoken>=0.7              # conta tokens para fatiar os textos em pedacos
 
 # --- Leitura dos formatos de arquivo -------------------------------------- #

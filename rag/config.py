@@ -40,7 +40,8 @@ PADROES = {
         "ignorar": ["~$*", ".*", "LEIA-ME.txt", "Thumbs.db", "desktop.ini"],
     },
     "rag": {
-        "modelo_embedding": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+        "provedor_embedding": "openai",
+        "modelo_embedding": "text-embedding-3-small",
         "pasta_banco": ".chroma_db",
         "colecao": "conteudo",
         "chunk_alvo_tokens": 300,

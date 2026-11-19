@@ -71,14 +71,30 @@ class Indexador:
     # ------------------------------------------------------------------ #
     def embedding_function(self):
         """
-        Cria (uma unica vez) o modelo local que transforma texto em vetores.
-        Na primeira execucao ele e baixado da internet (~120 MB) e fica em cache.
+        Cria (uma unica vez) a funcao que transforma texto em vetores.
+        Por padrao usa a API da OpenAI para evitar carregar PyTorch e um modelo
+        sentence-transformers na memoria limitada do Render.
         """
         if self._ef is None:
             from chromadb.utils import embedding_functions
-            self._ef = embedding_functions.SentenceTransformerEmbeddingFunction(
-                model_name=self.modelo_embedding
-            )
+            provedor = (self.cfg["rag"].get("provedor_embedding") or "openai").lower()
+            if provedor == "openai":
+                chave = cfgmod.api_key(self.cfg)
+                if not chave:
+                    raise RuntimeError("OPENAI_API_KEY nao configurada para gerar embeddings.")
+                llm = self.cfg.get("llm", {})
+                parametros = {"api_key": chave, "model_name": self.modelo_embedding}
+                if (llm.get("base_url") or "").strip():
+                    parametros["api_base"] = llm["base_url"].strip()
+                self._ef = embedding_functions.OpenAIEmbeddingFunction(**parametros)
+            elif provedor == "local":
+                # Compatibilidade opcional para execucao local, caso o usuario
+                # reinstale sentence-transformers manualmente.
+                self._ef = embedding_functions.SentenceTransformerEmbeddingFunction(
+                    model_name=self.modelo_embedding
+                )
+            else:
+                raise RuntimeError("Provedor de embedding desconhecido: {}".format(provedor))
         return self._ef
 
     def colecao(self):
