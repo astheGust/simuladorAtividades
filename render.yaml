@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: simulador-rag
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn index:app --bind 0.0.0.0:$PORT --workers 1 --threads 2 --timeout 300
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: PYTHON_VERSION
+        value: "3.11.9"

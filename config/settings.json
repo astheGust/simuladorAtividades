@@ -1,0 +1,62 @@
+{
+  "_ajuda": "Arquivo de configuracao do simulador. JSON nao aceita comentarios, entao as explicacoes ficam nas chaves que comecam com _ (sao ignoradas pelo programa). Se voce apagar alguma chave, o valor padrao do codigo e usado.",
+
+  "titulo": "Simulado Personalizado",
+
+  "conteudo": {
+    "_ajuda": "pasta: onde voce joga os arquivos. topico_por: 'pasta' usa o nome da subpasta como topico (recomendado); 'arquivo' usa o nome do arquivo. ignorar: padroes de nome que nao devem entrar na base.",
+    "pasta": "conteudo",
+    "topico_por": "pasta",
+    "ignorar": ["~$*", ".*", "LEIA-ME.txt", "Thumbs.db", "desktop.ini"]
+  },
+
+  "rag": {
+    "_ajuda": "modelo_embedding: modelo local que transforma texto em vetores (multilingue, funciona bem em portugues). Trocar esse nome forca a reconstrucao completa da base. trechos_por_topico/vizinhos_por_trecho controlam quanto material vai para o prompt.",
+    "modelo_embedding": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+    "pasta_banco": ".chroma_db",
+    "colecao": "conteudo",
+    "chunk_alvo_tokens": 300,
+    "chunk_max_tokens": 450,
+    "chunk_overlap_paragrafos": 1,
+    "trechos_por_topico": 2,
+    "vizinhos_por_trecho": 2
+  },
+
+  "llm": {
+    "_ajuda": "modelo: gpt-5.6-luna e o mais barato da OpenAI (US$ 0,20 por 1 milhao de tokens de entrada). base_url vazio = API oficial da OpenAI; preencha para usar um servico compativel (OpenRouter, Ollama, etc). reasoning_effort: none/low/medium/high (quanto maior, mais caro e mais lento). temperature e as penalidades ficam em null porque a familia gpt-5.6 NAO aceita esses parametros; se voce trocar por um modelo antigo (ex: gpt-4o-mini), pode preencher.",
+    "modelo": "gpt-5.6-luna",
+    "base_url": "",
+    "api_key_env": "OPENAI_API_KEY",
+    "reasoning_effort": "low",
+    "max_completion_tokens": 8000,
+    "temperature": null,
+    "top_p": null,
+    "frequency_penalty": null,
+    "presence_penalty": null,
+    "usar_json_schema": true,
+    "timeout_segundos": 180,
+    "preco_entrada_por_milhao": 0.20,
+    "preco_saida_por_milhao": 1.20
+  },
+
+  "simulado": {
+    "_ajuda": "questoes_por_lote: quantas questoes o modelo gera por rodada. opcoes_por_questao: de 2 a 8 alternativas. limiar_duplicata: 0 a 1; quanto menor, mais agressivo o filtro de questoes repetidas. permitir_sem_conteudo: se true, o simulado funciona mesmo com a pasta vazia, usando o tema_livre e o conhecimento proprio do modelo.",
+    "questoes_por_lote": 8,
+    "opcoes_por_questao": 4,
+    "idioma": "portugues do Brasil",
+    "instrucoes_extras": "",
+    "limiar_duplicata": 0.78,
+    "permitir_sem_conteudo": false,
+    "tema_livre": ""
+  },
+
+  "variaveis_prompt": {
+    "_ajuda": "Crie aqui suas proprias variaveis para usar no config/prompt.md. Exemplo: colocar \"banca\": \"CESPE\" permite escrever {{banca}} dentro do prompt."
+  },
+
+  "servidor": {
+    "host": "127.0.0.1",
+    "porta": 5000,
+    "abrir_navegador": true
+  }
+}

@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<!--
+  index.html - Interface do simulado (tudo em uma pagina so).
+
+  Esta pagina conversa com o app.py por quatro endereços:
+    GET  /api/status    -> quantos arquivos/topicos existem na base
+    POST /api/sync      -> botao "Atualizar base"
+    GET  /api/questions -> pede o proximo lote de questoes
+    POST /api/answer    -> envia a resposta escolhida e recebe a correcao
+
+  Pode editar cores e textos a vontade: e HTML/CSS/JS puro, sem frameworks.
+-->
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ titulo }}</title>
+<style>
+  :root{
+    --bg:#0f1220; --bg2:#151a2e; --card:#1b2138; --card-2:#20284a;
+    --text:#e8ecf8; --muted:#9aa3c2; --brand:#6c8cff; --brand-2:#8a6cff;
+    --ok:#2ecc8f; --ok-bg:rgba(46,204,143,.14);
+    --err:#ff5c7a; --err-bg:rgba(255,92,122,.14);
+    --warn:#ffc46b; --warn-bg:rgba(255,196,107,.12);
+    --border:#2a3358; --shadow:0 12px 40px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:-apple-system,"Segoe UI",Roboto,Inter,system-ui,sans-serif;
+    background:radial-gradient(1200px 600px at 80% -10%,#243056 0,transparent 60%),
+               radial-gradient(900px 500px at 0 0,#2a1f4d 0,transparent 55%),var(--bg);
+    color:var(--text); min-height:100vh; line-height:1.55;
+  }
+  .wrap{max-width:900px;margin:0 auto;padding:28px 20px 80px}
+  header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  .title h1{font-size:1.55rem;margin:0}
+  .title h1 .grad{background:linear-gradient(90deg,var(--brand),var(--brand-2));
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .subtitle{color:var(--muted);font-size:.9rem}
+  .badges{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+  .badge{font-size:.72rem;padding:5px 10px;border-radius:999px;border:1px solid var(--border);
+    color:var(--muted);background:var(--card);white-space:nowrap}
+  .badge.on{color:var(--ok);border-color:rgba(46,204,143,.4);background:var(--ok-bg)}
+  .badge.warn{color:var(--warn);border-color:rgba(255,196,107,.4);background:var(--warn-bg)}
+  .badge button{all:unset;cursor:pointer}
+
+  .stats{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0 6px}
+  .pill{background:var(--card);border:1px solid var(--border);border-radius:14px;
+    padding:10px 14px;min-width:96px;box-shadow:var(--shadow)}
+  .pill .n{font-size:1.3rem;font-weight:700}
+  .pill .l{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}
+  .pill.ok .n{color:var(--ok)} .pill.err .n{color:var(--err)}
+
+  .progress{height:8px;background:var(--card);border-radius:999px;overflow:hidden;
+    border:1px solid var(--border);margin:16px 0 8px}
+  .progress>div{height:100%;width:0;background:linear-gradient(90deg,var(--brand),var(--brand-2));
+    transition:width .4s ease}
+
+  details.topicos{margin:6px 0 16px;font-size:.86rem;color:var(--muted)}
+  details.topicos summary{cursor:pointer}
+  .tabela{width:100%;border-collapse:collapse;margin-top:10px}
+  .tabela td{padding:5px 8px;border-bottom:1px solid var(--border);font-size:.85rem}
+  .tabela td:last-child{text-align:right;font-variant-numeric:tabular-nums}
+
+  .card{background:linear-gradient(180deg,var(--card),var(--bg2));border:1px solid var(--border);
+    border-radius:20px;padding:24px;margin:18px 0;box-shadow:var(--shadow);animation:rise .4s ease}
+  @keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+  .q-top{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:14px}
+  .q-topic{font-size:.72rem;color:var(--brand);background:rgba(108,140,255,.12);
+    border:1px solid rgba(108,140,255,.3);padding:4px 10px;border-radius:999px}
+  .q-num{font-size:.8rem;color:var(--muted)}
+  .q-text{font-size:1.1rem;font-weight:600;margin:0 0 18px;white-space:pre-wrap}
+
+  .opt{display:flex;align-items:flex-start;gap:12px;width:100%;text-align:left;cursor:pointer;
+    padding:14px 16px;margin:10px 0;background:var(--card-2);border:1.5px solid var(--border);
+    border-radius:14px;color:var(--text);font-size:1rem;transition:all .18s ease}
+  .opt:hover:not(.locked){border-color:var(--brand);transform:translateY(-1px)}
+  .opt .key{flex:0 0 28px;height:28px;border-radius:8px;display:grid;place-items:center;
+    background:var(--bg);border:1px solid var(--border);font-weight:700;font-size:.85rem;color:var(--muted)}
+  .opt.locked{cursor:default}
+  .opt.correct{border-color:var(--ok);background:var(--ok-bg)}
+  .opt.correct .key{background:var(--ok);color:#06281c;border-color:var(--ok)}
+  .opt.wrong{border-color:var(--err);background:var(--err-bg)}
+  .opt.wrong .key{background:var(--err);color:#3a0512;border-color:var(--err)}
+  .opt .mark{margin-left:auto;font-weight:700}
+  .opt.correct .mark{color:var(--ok)} .opt.wrong .mark{color:var(--err)}
+
+  .feedback{margin-top:14px;padding:14px 16px;border-radius:14px;border:1px solid var(--border);display:none}
+  .feedback.show{display:block;animation:rise .3s ease}
+  .feedback.ok{background:var(--ok-bg);border-color:rgba(46,204,143,.4)}
+  .feedback.err{background:var(--err-bg);border-color:rgba(255,92,122,.4)}
+  .feedback .head{font-weight:700;margin-bottom:6px}
+  .feedback.ok .head{color:var(--ok)} .feedback.err .head{color:var(--err)}
+  .feedback .correta{margin:6px 0;font-weight:600}
+  .feedback .exp{opacity:.92;font-size:.95rem;white-space:pre-wrap}
+  .feedback .exp .lbl{color:var(--muted);text-transform:uppercase;font-size:.7rem;
+    letter-spacing:.6px;display:block;margin-bottom:2px}
+
+  .btn{appearance:none;border:none;cursor:pointer;font-size:1rem;font-weight:600;padding:14px 22px;
+    border-radius:14px;color:#fff;background:linear-gradient(90deg,var(--brand),var(--brand-2));
+    box-shadow:0 8px 24px rgba(108,140,255,.35);transition:transform .15s ease,opacity .15s ease}
+  .btn:hover{transform:translateY(-2px)}
+  .btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+  .btn.ghost{background:transparent;border:1.5px solid var(--border);color:var(--text);box-shadow:none}
+  .btn.small{font-size:.85rem;padding:9px 14px;border-radius:10px}
+  .actions{display:flex;gap:12px;justify-content:center;margin-top:26px;flex-wrap:wrap}
+  .center{text-align:center} .muted{color:var(--muted)}
+  .loader{display:inline-block;width:20px;height:20px;border:3px solid rgba(255,255,255,.25);
+    border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;vertical-align:-4px;margin-right:8px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .error-box{background:var(--err-bg);border:1px solid rgba(255,92,122,.4);color:#ffd7df;
+    padding:16px;border-radius:14px}
+  .hero{padding:32px 0 8px;text-align:center}
+  .hero p{color:var(--muted);max-width:620px;margin:8px auto 22px}
+  code{background:var(--bg);padding:2px 6px;border-radius:6px;font-size:.88em}
+  .rodape-lote{font-size:.75rem;color:var(--muted);text-align:center;margin-top:10px}
+</style>
+<style>.setup-card{max-width:760px;margin-left:auto;margin-right:auto;text-align:center}.setup-card label{display:flex;flex-direction:column;gap:6px;text-align:left;font-size:.86rem;color:var(--muted)}.setup-card input,.setup-card select,.setup-card textarea{padding:11px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);font:inherit}.setup-card textarea{width:100%;resize:vertical}.setup-card h2{margin:0}.setup-card #start{margin-top:18px}.hero{display:none}</style>
+<style>
+  @media (max-width:600px){
+    .wrap{padding:18px 12px 56px}
+    header{align-items:center}
+    .title h1{font-size:1.3rem}
+    .subtitle{font-size:.78rem}
+    .badges{width:100%;justify-content:flex-start}
+    .stats{justify-content:center;gap:7px}
+    .pill{flex:1 1 40%;min-width:0;padding:8px 9px;text-align:center}
+    .card{padding:17px 14px;border-radius:16px}
+    .q-top{align-items:flex-start;flex-direction:column;gap:8px}
+    .q-text{font-size:1rem}
+    .opt{padding:12px 11px;font-size:.93rem}
+    .setup-card .btn{width:100%}
+    .setup-card input[type=file]{font-size:.78rem;max-width:100%}
+    .actions .btn{width:100%}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="title">
+      <h1>{{ titulo }} <span class="grad">·</span></h1>
+      <span class="subtitle">Questões geradas a partir dos seus arquivos · modelo <b>{{ modelo }}</b></span>
+    </div>
+    <div class="badges">
+      <span class="badge" id="badge-base">carregando base…</span>
+      <span class="badge"><button id="btn-sync" title="Reprocessar a pasta de conteúdo">↻ atualizar base</button></span>
+    </div>
+  </header>
+
+  <div class="stats">
+    <div class="pill"><div class="n" id="st-total">0</div><div class="l">Respondidas</div></div>
+    <div class="pill ok"><div class="n" id="st-ok">0</div><div class="l">Acertos</div></div>
+    <div class="pill err"><div class="n" id="st-err">0</div><div class="l">Erros</div></div>
+    <div class="pill"><div class="n" id="st-pct">0%</div><div class="l">Aproveitamento</div></div>
+  </div>
+
+  <div class="progress"><div id="prog"></div></div>
+
+  <div class="card setup-card">
+    <h2>Preparar atividade</h2>
+    <p class="muted">Envie um PDF e escolha como a próxima atividade será gerada.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:18px 0">
+      <label>PDF de estudo<input id="pdfs" type="file" accept="application/pdf,.pdf" multiple></label>
+      <label>Questões<input id="cfg-questoes" type="number" min="1" max="30" value="8"></label>
+      <label>Alternativas<input id="cfg-opcoes" type="number" min="2" max="8" value="4"></label>
+      <label>Dificuldade<select id="cfg-dificuldade"><option value="variada">Variada</option><option value="facil">Fácil</option><option value="media">Média</option><option value="dificil">Difícil</option></select></label>
+    </div>
+    <label>Foco da atividade (opcional)
+      <textarea id="cfg-foco" rows="3" maxlength="2000" placeholder="Ex.: priorize linguagem SQL, SELECT, JOIN, GROUP BY e subconsultas; não foque em modelagem."></textarea>
+    </label>
+    <button class="btn" id="start">Fazer atividades</button>
+    <span id="setup-msg" class="muted" style="margin-left:10px"></span>
+  </div>
+
+  <details class="topicos" id="box-topicos" style="display:none">
+    <summary>Desempenho por tópico</summary>
+    <table class="tabela"><tbody id="tab-topicos"></tbody></table>
+  </details>
+
+  <div id="app">
+    <div class="hero">
+      <p>Coloque seus arquivos (PDF, Word, Excel, TXT, Markdown, CSV…) na pasta
+         <code id="pasta-conteudo">conteudo/</code> e clique no botão abaixo.
+         Cada rodada sorteia tópicos diferentes do seu material — acertou fica verde,
+         errou mostra a resposta certa e a explicação.</p>
+      <button class="btn" id="start">Começar simulado</button>
+    </div>
+  </div>
+
+  <div class="actions" id="actions" style="display:none">
+    <button class="btn" id="next">Gerar próximas questões</button>
+  </div>
+  <div class="rodape-lote" id="rodape-lote"></div>
+
+</div>
+
+<script>
+const $ = (s, el=document) => el.querySelector(s);
+const LETRAS = ["A","B","C","D","E","F","G","H"];
+let respondidas = 0, totalDoLote = 0;
+
+/* ---------------------------------------------------------------- *
+ * Status da base de conhecimento (cabeçalho)
+ * ---------------------------------------------------------------- */
+async function carregarStatus(){
+  try{
+    const r = await fetch("/api/status");
+    const s = await r.json();
+    const badge = $("#badge-base");
+    const nTopicos = Object.keys(s.topicos || {}).length;
+
+    if(s.arquivos > 0){
+      badge.className = "badge on";
+      badge.textContent = `● ${s.arquivos} arquivo(s) · ${s.pedacos} trechos · ${nTopicos} tópico(s)`;
+    }else{
+      badge.className = "badge warn";
+      badge.textContent = "⚠ pasta de conteúdo vazia";
+    }
+    badge.title = "Pasta: " + (s.pasta_conteudo || "");
+    if(s.pasta_conteudo) $("#pasta-conteudo").textContent = s.pasta_conteudo;
+
+    const comErro = Object.keys(s.erros || {}).length;
+    if(comErro) badge.textContent += ` · ${comErro} com erro`;
+  }catch(e){}
+}
+
+/* ---------------------------------------------------------------- *
+ * Estatísticas (pílulas + tabela por tópico)
+ * ---------------------------------------------------------------- */
+async function carregarStats(){
+  try{ pintarStats(await (await fetch("/api/stats")).json()); }catch(e){}
+}
+function pintarStats(s){
+  $("#st-total").textContent = s.total;
+  $("#st-ok").textContent = s.acertos;
+  $("#st-err").textContent = s.erros;
+  $("#st-pct").textContent = (s.percentual || 0) + "%";
+
+  const corpo = $("#tab-topicos");
+  if(s.por_topico && s.por_topico.length){
+    $("#box-topicos").style.display = "block";
+    corpo.innerHTML = s.por_topico.map(t =>
+      `<tr><td>${escapeHtml(t.topico)}</td><td>${t.acertos}/${t.total} · ${t.percentual}%</td></tr>`
+    ).join("");
+  }else{
+    $("#box-topicos").style.display = "none";
+  }
+}
+
+/* ---------------------------------------------------------------- *
+ * Atualizar base (reprocessa a pasta agora)
+ * ---------------------------------------------------------------- */
+$("#btn-sync").addEventListener("click", async () => {
+  const badge = $("#badge-base");
+  badge.className = "badge";
+  badge.textContent = "sincronizando…";
+  try{
+    const r = await fetch("/api/sync", {method:"POST", headers:{"Content-Type":"application/json"}, body:"{}"});
+    const d = await r.json();
+    if(d.ok){
+      const res = d.resumo;
+      $("#rodape-lote").textContent =
+        `Base atualizada: ${res.novos.length} novo(s), ${res.alterados.length} alterado(s), ${res.removidos.length} removido(s).`;
+    }
+  }catch(e){}
+  carregarStatus();
+});
+
+/* ---------------------------------------------------------------- *
+ * Geração e renderização das questões
+ * ---------------------------------------------------------------- */
+function setLoading(msg, detalhe){
+  $("#app").innerHTML = `<div class="card center">
+      <span class="loader"></span> ${msg}
+      <div class="muted" style="margin-top:8px">${detalhe || ""}</div>
+    </div>`;
+}
+
+async function carregarPerguntas(){
+  $("#actions").style.display = "none";
+  $("#rodape-lote").textContent = "";
+  const msg = $("#setup-msg");
+  msg.textContent = "Aplicando configuração...";
+  try{
+    const arquivos = $("#pdfs").files;
+    if(arquivos.length){
+      const form = new FormData();
+      for(const arquivo of arquivos) form.append("files", arquivo);
+      msg.textContent = "Enviando PDF e indexando...";
+      const upload = await fetch("/api/upload", {method:"POST", body:form});
+      const resultadoUpload = await upload.json();
+      if(!upload.ok || resultadoUpload.erro) throw new Error(resultadoUpload.erro || "Falha no upload");
+    }
+    const config = await fetch("/api/config", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({questoes:$("#cfg-questoes").value, opcoes:$("#cfg-opcoes").value, dificuldade:$("#cfg-dificuldade").value, foco:$("#cfg-foco").value})});
+    const dadosConfig = await config.json();
+    if(!config.ok || dadosConfig.erro) throw new Error(dadosConfig.erro || "Falha na configuração");
+  }catch(e){
+    $("#app").innerHTML = `<div class="card"><div class="error-box">${escapeHtml(e.message)}</div></div>`;
+    return;
+  }
+  setLoading("Gerando questões…", "Conferindo a pasta de conteúdo e consultando o modelo. Leva alguns segundos.");
+  try{
+    const r = await fetch("/api/questions");
+    const data = await r.json();
+    if(!r.ok || data.erro) throw new Error(data.erro || "falha ao gerar as questões");
+    renderPerguntas(data.questions, data.extras);
+    carregarStatus();
+  }catch(e){
+    $("#app").innerHTML = `<div class="card"><div class="error-box">
+        <b>Não consegui gerar as questões.</b><br>${escapeHtml(e.message)}
+        <div class="muted" style="margin-top:10px">
+          Confira se a chave da OpenAI está no arquivo <code>.env</code> e se há arquivos na pasta de conteúdo.
+        </div>
+      </div></div>
+      <div class="center" style="margin-top:18px">
+        <button class="btn" onclick="carregarPerguntas()">Tentar de novo</button>
+      </div>`;
+  }
+}
+
+function renderPerguntas(qs, extras){
+  respondidas = 0;
+  totalDoLote = qs.length;
+  const app = $("#app");
+  app.innerHTML = "";
+  qs.forEach((q, i) => app.appendChild(cardPergunta(q, i, qs.length)));
+  $("#prog").style.width = "0%";
+  $("#actions").style.display = "none";
+
+  if(extras){
+    const partes = [];
+    if(extras.arquivos_usados && extras.arquivos_usados.length)
+      partes.push("fontes: " + extras.arquivos_usados.join(", "));
+    if(extras.tokens && extras.tokens.entrada)
+      partes.push(`${extras.tokens.entrada + extras.tokens.saida} tokens`);
+    if(extras.custo_estimado)
+      partes.push(`~US$ ${extras.custo_estimado.toFixed(5)}`);
+    $("#rodape-lote").textContent = partes.join(" · ");
+  }
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+function cardPergunta(q, i, total){
+  const card = document.createElement("div");
+  card.className = "card";
+  card.dataset.answered = "0";
+  card.innerHTML = `
+    <div class="q-top">
+      <span class="q-topic">${escapeHtml(q.topico || "geral")}</span>
+      <span class="q-num">Questão ${i+1} de ${total}</span>
+    </div>
+    <p class="q-text">${escapeHtml(q.pergunta)}</p>
+    <div class="opts"></div>
+    <div class="feedback"></div>`;
+
+  const box = $(".opts", card);
+  box.innerHTML = q.opcoes.map((txt, idx) => `
+    <button class="opt" data-idx="${idx}">
+      <span class="key">${LETRAS[idx] || (idx+1)}</span>
+      <span class="txt">${escapeHtml(txt)}</span>
+      <span class="mark"></span>
+    </button>`).join("");
+
+  box.querySelectorAll(".opt").forEach(btn => {
+    btn.addEventListener("click", () => responder(card, q, parseInt(btn.dataset.idx)));
+  });
+  return card;
+}
+
+async function responder(card, q, escolhido){
+  if(card.dataset.answered === "1") return;
+  card.dataset.answered = "1";
+
+  const correto = q.indice_correto;
+  const acertou = escolhido === correto;
+
+  card.querySelectorAll(".opt").forEach(b => {
+    b.classList.add("locked");
+    const idx = parseInt(b.dataset.idx);
+    if(idx === correto){ b.classList.add("correct"); $(".mark", b).textContent = "✓"; }
+    if(idx === escolhido && !acertou){ b.classList.add("wrong"); $(".mark", b).textContent = "✗"; }
+  });
+
+  const fb = $(".feedback", card);
+  fb.className = "feedback " + (acertou ? "ok" : "err") + " show";
+  fb.innerHTML = (acertou
+      ? `<div class="head">✓ Acertou!</div>`
+      : `<div class="head">✗ Errou</div>
+         <div class="correta">Resposta correta: <b>${LETRAS[correto]})</b> ${escapeHtml(q.opcoes[correto])}</div>`)
+    + `<div class="exp"><span class="lbl">Explicação</span>${escapeHtml(q.explicacao)}</div>`;
+
+  try{
+    const r = await fetch("/api/answer", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({
+        topico:q.topico, pergunta:q.pergunta, opcoes:q.opcoes,
+        indice_correto:correto, resposta_usuario:escolhido, explicacao:q.explicacao
+      })
+    });
+    const res = await r.json();
+    if(res.stats) pintarStats(res.stats);
+  }catch(e){}
+
+  respondidas++;
+  $("#prog").style.width = Math.round(100*respondidas/totalDoLote) + "%";
+  if(respondidas >= totalDoLote) $("#actions").style.display = "flex";
+}
+
+function escapeHtml(s){
+  return String(s == null ? "" : s).replace(/[&<>"']/g, c =>
+    ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+$("#start").addEventListener("click", carregarPerguntas);
+$("#next").addEventListener("click", carregarPerguntas);
+fetch("/api/config").then(r => r.json()).then(c => {
+  if(c.questoes) $("#cfg-questoes").value = c.questoes;
+  if(c.opcoes) $("#cfg-opcoes").value = c.opcoes;
+  if(c.dificuldade) $("#cfg-dificuldade").value = c.dificuldade;
+  if(c.foco) $("#cfg-foco").value = c.foco;
+}).catch(() => {});
+carregarStatus();
+carregarStats();
+</script>
+</body>
+</html>

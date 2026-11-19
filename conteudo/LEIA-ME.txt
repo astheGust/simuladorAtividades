@@ -1,0 +1,35 @@
+==============================================================
+  ESTA E A PASTA DO SEU CONTEUDO DE ESTUDO
+==============================================================
+
+Jogue aqui dentro os arquivos sobre os quais voce quer ser
+testado. Pode ser qualquer assunto: concurso, faculdade,
+certificacao, manual da empresa, apostila, o que for.
+
+FORMATOS ACEITOS
+  .pdf  .txt  .md  .docx  .doc  .xlsx  .xls  .csv
+  .pptx  .html  .json  .tsv  .rst  .log
+
+ORGANIZE POR MATERIA (opcional, mas recomendado)
+  Cada SUBPASTA vira um "topico" do simulado, e o simulador
+  equilibra as questoes entre os topicos:
+
+  conteudo/
+    Direito Constitucional/
+       aula01.pdf
+       resumo.docx
+    Portugues/
+       crase.md
+    Raciocinio Logico/
+       exercicios.xlsx
+
+  Se voce jogar os arquivos soltos aqui (sem subpasta), o
+  topico de cada um passa a ser o proprio nome do arquivo.
+
+IMPORTANTE
+  Toda vez que voce rodar o simulado, ele confere esta pasta:
+  arquivo novo entra na base, arquivo apagado sai da base e
+  arquivo editado e reprocessado. Voce nao precisa rodar
+  nenhum comando extra.
+
+Pode apagar este LEIA-ME.txt; ele e ignorado pelo simulador.

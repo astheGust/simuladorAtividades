@@ -1,0 +1,32 @@
+# =========================================================================== #
+#  Dependencias do Simulador RAG
+#  Instale tudo de uma vez com o setup.ps1 (recomendado) ou manualmente:
+#      pip install -r requirements.txt
+# =========================================================================== #
+
+# --- Servidor web e utilidades ------------------------------------------- #
+flask>=3.0                 # servidor web que roda o simulado no navegador
+gunicorn>=22.0             # servidor WSGI usado pelo Render/Linux
+python-dotenv>=1.0         # le a chave da API do arquivo .env
+numpy>=1.26                # calculo de similaridade (deduplicacao de questoes)
+
+# --- LLM (OpenAI / gpt-5.6-luna) ------------------------------------------ #
+openai>=1.60               # cliente oficial da API da OpenAI
+
+# --- RAG: banco vetorial + embeddings ------------------------------------- #
+chromadb>=0.5.15           # banco vetorial local (guarda os trechos dos arquivos)
+sentence-transformers>=3.0 # gera os embeddings localmente (de graca, sem API)
+tiktoken>=0.7              # conta tokens para fatiar os textos em pedacos
+
+# --- Leitura dos formatos de arquivo -------------------------------------- #
+pypdf>=4.2                 # .pdf
+python-docx>=1.1           # .docx
+openpyxl>=3.1              # .xlsx / .xlsm
+xlrd>=2.0                  # .xls (Excel antigo)
+python-pptx>=0.6.23        # .pptx
+beautifulsoup4>=4.12       # .html / .htm
+lxml>=5.0                  # parser usado pelo beautifulsoup
+charset-normalizer>=3.3    # detecta a codificacao de .txt/.csv baguncados
+
+# --- Somente Windows: le .doc antigo usando o Word instalado (opcional) ---- #
+pywin32>=306; sys_platform == "win32"

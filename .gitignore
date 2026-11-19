@@ -1,0 +1,18 @@
+# Ambiente e segredos
+.venv/
+.env
+
+# Estado gerado automaticamente pelo RAG
+.chroma_db/
+.rag_state/
+
+# Historico de respostas do usuario
+historico.csv
+
+# Conteudo de estudo do usuario (nao versionar arquivos pessoais)
+conteudo/*
+!conteudo/LEIA-ME.txt
+
+# Python
+__pycache__/
+*.pyc
